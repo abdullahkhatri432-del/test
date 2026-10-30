@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowRight, ClipboardList, CheckCircle2 } from 'lucide-react'
 import { clinic } from '../config/clinic'
 import heroImage from '../assets/images/hero-rehabilitation.jpg'
+import heroImageSmall from '../assets/images/hero-rehabilitation-800.jpg'
 import './Hero.css'
 
 const highlights = [
@@ -81,6 +82,8 @@ export function Hero() {
           <figure className="hero__figure">
             <img
               src={heroImage}
+              srcSet={`${heroImageSmall} 800w, ${heroImage} 1600w`}
+              sizes="(max-width: 920px) 92vw, 46vw"
               alt="A physiotherapist supporting a patient's leg during a rehabilitation exercise in a bright clinic room"
               width="1600"
               height="1067"

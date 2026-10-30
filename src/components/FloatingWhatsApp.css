@@ -185,6 +185,18 @@
   height: 16px;
 }
 
+@media (max-width: 720px) {
+  .wa {
+    bottom: calc(5.6rem + env(safe-area-inset-bottom));
+  }
+
+  /* The pending state is explained in the contact section; on small screens the
+     quick-action bar already covers contact + appointment. */
+  .wa--pending {
+    display: none;
+  }
+}
+
 @media (max-width: 640px) {
   .wa__caption {
     display: none;

@@ -34,37 +34,59 @@ npm run lint
 
 ## What's included
 
-| Section | Notes |
+| Area | Notes |
 | --- | --- |
-| Demo bar + demo badges | Persistent "Demo website" label so the preview can't be mistaken for the live site |
-| Navbar | Sticky, blurs on scroll, active-section highlight, accessible mobile drawer (Esc, scroll lock, focus return), appointment CTA |
-| Hero | "Move Better. Recover Stronger. Live Healthier." + CTAs + care-pathway card |
+| Demo bar + badges | Persistent "Demo website" label in the top bar, navbar and footer, plus `noindex` metadata |
+| Navbar | Sticky, blurs on scroll, active-section highlight, accessible mobile drawer (Escape, scroll lock, focus return) and appointment CTA |
+| Hero | Exact headline "Move Better. Recover Stronger. Live Healthier.", primary/secondary CTAs, care-pathway card, responsive `srcset` image |
 | About | General physiotherapy explanation, focus areas, honesty note about unverified clinic details |
-| Services | 8 service cards driven by config; "Enquire about this service" pre-fills the form |
+| Services | 8 config-driven cards with category labels, **accessible detail dialogs** (native `<dialog>` with focus trap), and "Enquire" prefill |
 | Why choose us | Dark teal section, four care principles, explicit no-guarantee note |
 | How it works | Contact → discuss → confirm, with a note that nothing books automatically |
-| Appointment enquiry | Client-side validation, date bounds, demo-only result panel, no sensitive fields |
+| FAQ | 6 accessible `<details>` questions about referrals, first visits, home visits and booking |
+| Appointment enquiry | Client-side validation, date bounds (+90 days), sensitive-data warning, **WhatsApp message preview + copy**, demo-only result panel |
 | Contact | Clearly labelled placeholders for phone/WhatsApp/address/hours/map + map artwork |
-| Footer | Nav, care areas, contact placeholders, medical disclaimer, image credit |
-| Floating WhatsApp | Marked as pending; opens an explanatory panel until a verified number exists |
+| Mobile action bar | Sticky Contact + Book Appointment actions on small screens, safe-area aware |
+| Floating WhatsApp | Real `wa.me` link only when a verified number exists; otherwise an explanatory pending panel (desktop) |
+| SEO | Descriptive title/description, Open Graph/Twitter cards, 1200×630 social image, config-generated `Physiotherapy` JSON-LD |
+| Footer | Navigation, care areas, contact placeholders, medical disclaimer, image credit |
 
 All business information is centralised in [`src/config/clinic.js`](src/config/clinic.js).
+FAQ copy lives in [`src/data/faqs.js`](src/data/faqs.js).
+
+### Intentionally not included
+
+No booking engine, payments, patient portal, medical records, prices, staff profiles, reviews,
+testimonials, awards, recovery timelines or success rates. Those need verified clinic input and
+a separate scope.
 
 ---
 
 ## Project structure
 
 ```
+public/
+  favicon.svg              Brand favicon
+  og-image.png             Social sharing card (1200×630)
 src/
   assets/
     fonts/                 Self-hosted Fraunces + Manrope (no runtime Google Fonts requests)
-    images/                Optimised Pexels placeholder photography
+    images/                Optimised Pexels placeholder photography (+ responsive variants)
   components/              One component + colocated CSS per section
     icons/WhatsAppIcon.jsx Custom WhatsApp glyph (Lucide has no brand icon)
+    ServiceDialog.jsx      Native <dialog> service detail sheet
+    Faq.jsx                Accessible FAQ accordion
+    MobileActionBar.jsx    Sticky mobile quick actions
+    StructuredData.jsx     JSON-LD generated from config
   config/clinic.js         Clinic name, contacts, hours, maps, services, form behaviour
-  data/navigation.js       Shared nav + footer links
+  data/
+    navigation.js          Shared nav + footer links
+    faqs.js                FAQ questions and answers
   hooks/useScrollReveal.js IntersectionObserver reveal, respects reduced motion
-  lib/validation.js        Form validation + date helpers
+  lib/
+    validation.js          Form validation + date helpers
+    contact.js             tel/WhatsApp links + enquiry message builder
+    clipboard.js           Clipboard API with legacy fallback
   styles/tokens.css        Design tokens (colour, type, spacing, radii, shadows)
   styles/base.css          Reset, typography, buttons, utilities, @font-face
 ```
@@ -77,33 +99,50 @@ Open `src/config/clinic.js` and replace the placeholders:
 
 | Field | Purpose | Example |
 | --- | --- | --- |
-| `phone.value` / `phone.verified` | Clickable clinic phone | `'+91 261 234 5678'`, `true` |
-| `whatsapp.value` / `whatsapp.verified` | Enables the real floating WhatsApp link | `'+91 98765 43210'`, `true` |
-| `address.lines` | Address lines shown on the contact card | `['2nd Floor, ...', 'Ring Road', 'Surat, Gujarat 395002']` |
+| `phone.value` / `phone.verified` | Clickable clinic phone + mobile action bar call button | `'+91 261 234 5678'`, `true` |
+| `whatsapp.value` / `whatsapp.verified` | Enables the real floating WhatsApp link and WhatsApp enquiry mode | `'+91 98765 43210'`, `true` |
+| `address.lines` | Address lines shown on the contact card and in JSON-LD | `['2nd Floor, ...', 'Ring Road', 'Surat, Gujarat 395002']` |
 | `hours.rows` / `hours.verified` | Opening hours (one row per range) | `[{ days: 'Mon – Sat', time: '9:00 – 19:00' }]` |
 | `mapsUrl` | Verified Google Maps share link | `'https://maps.app.goo.gl/...'` |
 | `services[].enabled` | Show/hide a service card | `false` removes the card |
+| `services[].tag` / `suits` / `includes` / `note` | Service dialog content; review every line with the clinic | — |
 | `isDemo` | `false` hides demo labels/disclaimers **only after content is approved** | `false` |
-| `appointment.mode` | `'demo'` keeps the honest "not sent" behaviour | `'demo'` |
+| `appointment.mode` | `'demo'`, `'whatsapp'` or `'endpoint'` | `'demo'` |
 | `appointment.maxDaysAhead` | Date picker upper bound | `90` |
+| `appointment.endpoint` | HTTPS endpoint for `'endpoint'` mode | `'https://.../api/enquiry'` |
 
 ### Enabling real appointment enquiries
 
-The current `appointment.mode` is `'demo'` and there is intentionally **no network request**. To
-go live, choose one of these and implement it properly:
+The default `appointment.mode` is `'demo'`. It validates locally, then shows exactly what would be
+shared — **no network request, no storage**.
 
-1. **WhatsApp** — set a verified `whatsapp.value`, then open a pre-filled `wa.me` link using the
-   enquiry details. No data is stored on the website.
-2. **Form backend** — POST to a serverless function / CRM endpoint you control, with spam
-   protection, a privacy notice and a retention policy. Never collect medical details here.
-3. **Booking system** — replace the form with the clinic's existing booking provider.
+**WhatsApp mode** — set a verified `whatsapp.value` and `appointment.mode: 'whatsapp'`. After
+validation the form opens `wa.me` with a pre-filled message (name, phone, preferred date, optional
+note). The visitor still has to press send inside WhatsApp. Nothing is stored by the website.
+`whatsappHref()` in [`src/lib/contact.js`](src/lib/contact.js) normalises Indian numbers to the
+`91XXXXXXXXXX` format `wa.me` expects.
 
-Until then, the form validates input locally, then shows a clear panel explaining nothing was
-sent or booked.
+**Endpoint mode** — set `appointment.endpoint` and `appointment.mode: 'endpoint'`. The form POSTs:
+
+```json
+{
+  "name": "…",
+  "phone": "…",
+  "preferredDate": "YYYY-MM-DD",
+  "message": "…",
+  "source": "website-enquiry"
+}
+```
+
+Your server must handle validation, rate limiting/spam protection, a privacy notice, consent and a
+retention policy. Never collect medical reports or health details through this form.
+
+> Pop-up blockers can stop the WhatsApp tab. The result panel includes an "Open WhatsApp again"
+> link as a fallback.
 
 ---
 
-## Content verification checklist
+## Launch checklist
 
 Before publishing, confirm with the clinic:
 
@@ -111,14 +150,26 @@ Before publishing, confirm with the clinic:
 - [ ] Verified phone, WhatsApp and email (if any)
 - [ ] Full address + Google Maps link
 - [ ] Opening hours and public holidays
-- [ ] Which of the 8 services are actually offered, and their scope
+- [ ] Which of the 8 services are actually offered, and the approved wording for every service dialog
+- [ ] FAQ answers match clinic policy (referrals, home visits, session expectations)
 - [ ] Home-visit availability and coverage area
 - [ ] Practitioner names, qualifications, registrations (not included yet)
 - [ ] Consent to use any clinic photography (current images are stock placeholders)
 - [ ] Insurance / payment information (not included)
 - [ ] Local compliance wording for healthcare advertising in Gujarat/India
 
-Remove the `noindex` meta tag in `index.html` only when the site is approved for public launch.
+Then:
+
+- [ ] Set `isDemo: false`
+- [ ] Set `appointment.mode` and verify the full enquiry journey on a real phone
+- [ ] Update the title, description and OG/Twitter copy in `index.html` to remove "Demo Website"
+- [ ] Review `src/data/faqs.js` — especially the booking answer — and any remaining demo wording
+- [ ] Remove `<meta name="robots" content="noindex, nofollow">` from `index.html`
+- [ ] Make the OG/Twitter image URL absolute in `index.html` (e.g. `https://your-domain/og-image.png`)
+- [ ] Replace the placeholder OG image and favicon if the clinic has a brand kit
+- [ ] Add the production domain and, if desired, a sitemap/robots policy
+- [ ] Re-run `npm run lint` and `npm run build`
+- [ ] Test on iOS Safari, Android Chrome and a desktop browser
 
 ---
 
@@ -139,21 +190,30 @@ export default defineConfig({
 })
 ```
 
-There are no routes or server requirements, so no SPA rewrite rules are needed.
+There are no routes or server requirements, so no SPA rewrite rules are needed. For an
+`appointment.mode: 'endpoint'` deployment, host the endpoint separately (serverless function or
+clinic CRM) and keep its URL in config — never embed secrets in the frontend.
 
 ---
 
 ## Accessibility & performance notes
 
-- Semantic landmarks, one `h1`, ordered heading hierarchy, skip link, visible focus states.
+- Semantic landmarks, one `h1`, ordered heading hierarchy, skip link and visible focus states.
+- Service details use native `<dialog>`: browser-managed focus trap, Escape close, backdrop click,
+  and focus returned to the triggering card.
+- FAQ uses native `<details>/<summary>`; keyboard-operable without custom key handling.
 - Form: labelled inputs, `aria-invalid`, `aria-describedby` error links, `role="alert"` errors,
-  focus moved to the first invalid field, and a `role="status"` demo result.
-- Mobile menu and WhatsApp popover support Escape, outside click and scroll locking.
+  focus moved to the first invalid field, focus moved to the result heading, and a copy fallback
+  for browsers without the Clipboard API.
+- Mobile menu, dialog and WhatsApp popover support Escape and scroll locking; the pending WhatsApp
+  control is hidden on small screens where the quick-action bar already offers contact + booking.
 - Motion is disabled under `prefers-reduced-motion`.
 - Fonts are self-hosted woff2 (latin subset); hero image is eager/high priority, remaining images
-  lazy-load with intrinsic dimensions to prevent layout shift.
+  lazy-load with `srcset`/`sizes` and intrinsic dimensions to reduce layout shift.
 - No analytics, cookies or third-party scripts; only `react`, `react-dom` and `lucide-react` are
   bundled.
+- Verified with Playwright at 1440×900, 1000×800, 834×1112 and 390×844, plus axe-core WCAG 2.1
+  A/AA checks (0 violations on desktop, mobile and the service dialog).
 
 ---
 

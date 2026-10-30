@@ -1,16 +1,8 @@
 import { ArrowUpRight, Clock, Info, MapPin, MessageCircle, Phone } from 'lucide-react'
 import { clinic } from '../config/clinic'
+import { telHref, whatsappHref } from '../lib/contact'
 import SectionHeader from './SectionHeader'
 import './Contact.css'
-
-function telHref(value) {
-  return `tel:${value.replace(/[^\d+]/g, '')}`
-}
-
-function whatsappHref(value) {
-  const digits = value.replace(/\D/g, '')
-  return digits ? `https://wa.me/${digits}` : ''
-}
 
 function ContactItem({ icon: Icon, label, pending = false, children }) {
   return (
@@ -77,7 +69,11 @@ export function Contact() {
                 Visiting the clinic in <em>Surat</em>
               </>
             }
-            lead="Call, message or send an appointment enquiry. The details below are placeholders until the clinic confirms them for publication."
+            lead={
+              clinic.isDemo
+                ? 'Call, message or send an appointment enquiry. The details below are placeholders until the clinic confirms them for publication.'
+                : 'Call, message or send an appointment enquiry. The clinic will confirm availability with you directly.'
+            }
           />
         </div>
 
@@ -148,10 +144,12 @@ export function Contact() {
               </ContactItem>
             </ul>
 
-            <p className="contact__disclaimer">
-              <Info aria-hidden="true" />
-              <span>{clinic.contactNote}</span>
-            </p>
+            {clinic.isDemo ? (
+              <p className="contact__disclaimer">
+                <Info aria-hidden="true" />
+                <span>{clinic.contactNote}</span>
+              </p>
+            ) : null}
           </div>
 
           <div className="contact__map" data-reveal style={{ '--reveal-delay': '120ms' }}>

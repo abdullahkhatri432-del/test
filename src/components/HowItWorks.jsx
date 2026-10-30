@@ -1,4 +1,5 @@
 import { CalendarCheck, ClipboardList, Info, MessageSquare } from 'lucide-react'
+import { clinic } from '../config/clinic'
 import SectionHeader from './SectionHeader'
 import './HowItWorks.css'
 
@@ -32,7 +33,7 @@ export function HowItWorks() {
               Three simple steps to <em>get started</em>
             </>
           }
-          lead="No online booking engine, no automatic confirmations. This preview keeps the process honest: you reach out, the clinic responds."
+          lead="No online booking engine, no automatic confirmations. This website keeps the process honest: you reach out, the clinic responds."
         />
 
         <ol className="how__steps">
@@ -55,8 +56,9 @@ export function HowItWorks() {
         <p className="how__note">
           <Info aria-hidden="true" />
           <span>
-            This demo website does not book appointments automatically and does not store any
-            information you type into the enquiry form.
+            {clinic.isDemo
+              ? 'This demo website does not book appointments automatically and does not store any information you type into the enquiry form.'
+              : 'Enquiries are reviewed by the clinic team. An appointment is only confirmed after they respond.'}
           </span>
         </p>
       </div>

@@ -153,7 +153,8 @@ export function Navbar() {
           <ArrowUpRight aria-hidden="true" />
         </a>
         <p className="mobile-nav__note">
-          {clinic.locality} · Demo preview
+          {clinic.locality}
+          {clinic.isDemo ? ' · Demo preview' : ''}
         </p>
       </div>
     </header>

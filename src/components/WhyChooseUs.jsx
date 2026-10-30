@@ -1,5 +1,6 @@
 import { Footprints, HeartHandshake, Info, ClipboardList, Target } from 'lucide-react'
 import exerciseImage from '../assets/images/exercise-therapy.jpg'
+import exerciseImageSmall from '../assets/images/exercise-therapy-640.jpg'
 import './WhyChooseUs.css'
 
 const reasons = [
@@ -57,6 +58,8 @@ export function WhyChooseUs() {
           <figure className="why__media" data-reveal style={{ '--reveal-delay': '160ms' }}>
             <img
               src={exerciseImage}
+              srcSet={`${exerciseImageSmall} 640w, ${exerciseImage} 1200w`}
+              sizes="(max-width: 900px) 100vw, 42vw"
               alt="A patient using a resistance band with a physiotherapist guiding the movement"
               width="1200"
               height="800"

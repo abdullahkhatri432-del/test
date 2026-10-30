@@ -18,9 +18,9 @@ export function Footer() {
               <Brand variant="dark" />
             </a>
             <p>
-              Physiotherapy and rehabilitation in {clinic.locality}. This is a demonstration
-              website: content, services and contact details must be verified with the clinic
-              before publication.
+              {clinic.isDemo
+                ? 'Physiotherapy and rehabilitation in Surat. This is a demonstration website: content, services and contact details must be verified with the clinic before publication.'
+                : `${clinic.specialty} in ${clinic.locality}. Contact the clinic to discuss assessment, rehabilitation and appointment availability.`}
             </p>
             {clinic.isDemo ? <span className="footer__demo">Demo website</span> : null}
           </div>
@@ -89,7 +89,7 @@ export function Footer() {
             {clinic.isDemo ? ' Demo preview only.' : ' All rights reserved.'}
           </p>
           <ul className="footer__legal">
-            <li>Placeholder imagery via Pexels</li>
+            {clinic.isDemo ? <li>Placeholder imagery via Pexels</li> : null}
             <li>
               <a href="#home" className="footer__top-link">
                 Back to top
@@ -100,10 +100,10 @@ export function Footer() {
         </div>
 
         <p className="footer__disclaimer">
-          <strong>Medical disclaimer:</strong> This website is a design preview and does not
-          provide medical advice, diagnosis or treatment. Physiotherapy suitability, session plans
-          and outcomes are individual and must be discussed with a qualified clinician. No
-          appointment is booked through this demo, and no recovery or result is guaranteed.
+          <strong>Medical disclaimer:</strong>{' '}
+          {clinic.isDemo
+            ? 'This website is a design preview and does not provide medical advice, diagnosis or treatment. Physiotherapy suitability, session plans and outcomes are individual and must be discussed with a qualified clinician. No appointment is booked through this demo, and no recovery or result is guaranteed.'
+            : 'This website provides general information about physiotherapy and rehabilitation services. It does not replace an individual assessment, diagnosis or treatment. Suitability for any treatment is discussed with a qualified clinician, and no recovery or result is guaranteed.'}
         </p>
       </div>
     </footer>

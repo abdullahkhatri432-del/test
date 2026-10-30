@@ -2,6 +2,7 @@ import { Activity, Info, Move, Sparkles, Target } from 'lucide-react'
 import { clinic } from '../config/clinic'
 import SectionHeader from './SectionHeader'
 import therapyImage from '../assets/images/manual-therapy.jpg'
+import therapyImageSmall from '../assets/images/manual-therapy-640.jpg'
 import './About.css'
 
 const pillars = [
@@ -35,6 +36,8 @@ export function About() {
           <div className="about__frame">
             <img
               src={therapyImage}
+              srcSet={`${therapyImageSmall} 640w, ${therapyImage} 1000w`}
+              sizes="(max-width: 960px) 88vw, 40vw"
               alt="A physiotherapist guiding a patient's shoulder through a supported stretch during a one-to-one session"
               width="1000"
               height="1500"
@@ -92,13 +95,15 @@ export function About() {
             ))}
           </ul>
 
-          <p className="about__note">
-            <Info aria-hidden="true" />
-            <span>
-              Clinic history, team qualifications and facility details are not invented for this
-              preview. They will be added once verified with the clinic.
-            </span>
-          </p>
+          {clinic.isDemo ? (
+            <p className="about__note">
+              <Info aria-hidden="true" />
+              <span>
+                Clinic history, team qualifications and facility details are not invented for this
+                preview. They will be added once verified with the clinic.
+              </span>
+            </p>
+          ) : null}
         </div>
       </div>
     </section>

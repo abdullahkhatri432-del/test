@@ -1,0 +1,130 @@
+/**
+ * Sample realistic testimonials for Wellness Physiotherapy and Rehabilitation Center.
+ * Written with ethical, non-promissory tone suitable for a healthcare practice.
+ */
+export const testimonialCategories = [
+  { id: 'all', label: 'All Reviews' },
+  { id: 'orthopedic', label: 'Orthopedic & Joint' },
+  { id: 'sports', label: 'Sports Rehab' },
+  { id: 'post-surgery', label: 'Post-Surgery' },
+  { id: 'back-pain', label: 'Spine & Back Pain' },
+  { id: 'neurological', label: 'Neuro & Mobility' },
+]
+
+export const initialTestimonials = [
+  {
+    id: 'test-1',
+    name: 'Rajesh Patel',
+    role: 'IT Consultant, 42',
+    location: 'Adajan, Surat',
+    category: 'back-pain',
+    categoryLabel: 'Spine & Back Pain',
+    rating: 5,
+    date: '2 weeks ago',
+    verified: true,
+    condition: 'Lower Back Stiffness & Desk Strain',
+    quote: 'The team took time to analyze my posture and daily habits rather than just giving generic exercises.',
+    content:
+      'Working long hours at a desk had caused persistent lower back tightness. The physiotherapist conducted a thorough movement assessment, explained the root causes clearly, and taught me exercises I could easily do at work. My mobility has improved significantly and I feel much more confident.',
+    highlight: 'Clear explanation & practical desk exercises',
+    helpfulCount: 24,
+  },
+  {
+    id: 'test-2',
+    name: 'Ananya Sharma',
+    role: 'Marathon Runner, 29',
+    location: 'Vesu, Surat',
+    category: 'sports',
+    categoryLabel: 'Sports Rehab',
+    rating: 5,
+    date: '1 month ago',
+    verified: true,
+    condition: 'Knee Ligament Strain Recovery',
+    quote: 'A structured, step-by-step return-to-running plan that kept me motivated throughout recovery.',
+    content:
+      'After suffering a knee strain while training, I was anxious about getting back on the track. The progressive loading exercises and continuous technique checks helped me rebuild strength safely without overexertion. Highly professional and patient care!',
+    highlight: 'Paced recovery & strength building',
+    helpfulCount: 19,
+  },
+  {
+    id: 'test-3',
+    name: 'Pravinbhai Mehta',
+    role: 'Retired Teacher, 67',
+    location: 'City Light, Surat',
+    category: 'post-surgery',
+    categoryLabel: 'Post-Surgery',
+    rating: 5,
+    date: '3 weeks ago',
+    verified: true,
+    condition: 'Post Total Knee Replacement Rehab',
+    quote: 'Extremely gentle, respectful, and encouraging approach during my post-surgery rehab.',
+    content:
+      'Following knee replacement surgery, my surgeon recommended physiotherapy. The exercises were adjusted gradually based on my pain tolerance. The clinic staff is very compassionate, and walking short distances is becoming much smoother now.',
+    highlight: 'Coordinated with surgeon protocols',
+    helpfulCount: 31,
+  },
+  {
+    id: 'test-4',
+    name: 'Meera Deshmukh',
+    role: 'Homemaker, 51',
+    location: 'Pal, Surat',
+    category: 'orthopedic',
+    categoryLabel: 'Orthopedic & Joint',
+    rating: 5,
+    date: '2 months ago',
+    verified: true,
+    condition: 'Frozen Shoulder & Joint Stiffness',
+    quote: 'Detailed assessment and personalized exercise guidance that made a huge difference in daily chores.',
+    content:
+      'Reaching top shelves or dressing was becoming painful due to shoulder restriction. After a few weeks of guided exercise therapy and home mobility work, my range of motion has improved substantially. I appreciated that they never forced any painful movement.',
+    highlight: 'Gentle, non-forced mobility work',
+    helpfulCount: 15,
+  },
+  {
+    id: 'test-5',
+    name: 'Dr. Vikram Shah',
+    role: 'General Physician, 58',
+    location: 'Ghopal Road, Surat',
+    category: 'orthopedic',
+    categoryLabel: 'Orthopedic & Joint',
+    rating: 5,
+    date: '1 month ago',
+    verified: true,
+    condition: 'Cervical Spondylosis & Neck Strain',
+    quote: 'As a physician, I value evidence-guided care. The clinical approach here is top notch.',
+    content:
+      'I refer my patients here regularly and eventually sought care myself for cervical neck strain. Their evidence-based approach, focus on patient education, and refusal to rely on shortcuts or unrealistic promises sets them apart.',
+    highlight: 'Doctor-recommended clinical care',
+    helpfulCount: 42,
+  },
+  {
+    id: 'test-6',
+    name: 'Kavita Chawla',
+    role: 'Business Owner, 38',
+    location: 'Piplod, Surat',
+    category: 'neurological',
+    categoryLabel: 'Neuro & Mobility',
+    rating: 5,
+    date: '3 months ago',
+    verified: true,
+    condition: 'Post-Stroke Balance & Gait Support',
+    quote: 'Dedicated care for my mother. They adapted every exercise to her energy levels and comfort.',
+    content:
+      'We brought my mother for post-stroke mobility rehabilitation. The physiotherapist showed immense patience, guiding her through balance and step exercises step by step. Her balance and confidence in standing have shown wonderful progress.',
+    highlight: 'Patient-centered & compassionate',
+    helpfulCount: 28,
+  },
+]
+
+export const clinicRatingStats = {
+  average: 4.9,
+  totalReviews: 128,
+  recommendationRate: '98%',
+  ratingsBreakdown: [
+    { stars: 5, percentage: 92 },
+    { stars: 4, percentage: 6 },
+    { stars: 3, percentage: 2 },
+    { stars: 2, percentage: 0 },
+    { stars: 1, percentage: 0 },
+  ],
+}

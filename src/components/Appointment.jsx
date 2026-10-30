@@ -1,26 +1,74 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Check, Info, Send } from 'lucide-react'
+import {
+  AlertCircle,
+  Check,
+  Copy,
+  Info,
+  Send,
+  SendHorizontal,
+} from 'lucide-react'
 import { clinic } from '../config/clinic'
+import { buildEnquiryMessage, whatsappHref } from '../lib/contact'
+import { copyText } from '../lib/clipboard'
 import {
   formatLongDate,
   getDateBounds,
   MESSAGE_LIMIT,
   validateAppointment,
 } from '../lib/validation'
+import WhatsAppIcon from './icons/WhatsAppIcon'
 import './Appointment.css'
 
 const emptyValues = { name: '', phone: '', date: '', message: '' }
+
+function EnquirySummary({ values }) {
+  return (
+    <dl className="appointment__summary">
+      <div>
+        <dt>Name</dt>
+        <dd>{values.name.trim()}</dd>
+      </div>
+      <div>
+        <dt>Phone</dt>
+        <dd>{values.phone.trim()}</dd>
+      </div>
+      <div>
+        <dt>Preferred date</dt>
+        <dd>{formatLongDate(values.date)}</dd>
+      </div>
+      {values.message.trim() ? (
+        <div>
+          <dt>Message</dt>
+          <dd>{values.message.trim()}</dd>
+        </div>
+      ) : null}
+    </dl>
+  )
+}
 
 export function Appointment({ prefill }) {
   const [values, setValues] = useState(emptyValues)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('idle')
+  const [copyState, setCopyState] = useState('idle')
   const headingRef = useRef(null)
   const formRef = useRef(null)
+  const resultHeadingRef = useRef(null)
+  const copyTimer = useRef(null)
 
   const bounds = useMemo(
     () => getDateBounds(clinic.appointment.maxDaysAhead),
     [],
+  )
+
+  const enquiryText = useMemo(
+    () => buildEnquiryMessage(values, clinic.shortName),
+    [values],
+  )
+
+  const whatsappLink = useMemo(
+    () => whatsappHref(clinic.whatsapp.value, enquiryText),
+    [enquiryText],
   )
 
   /* A service card asked to enquire about that service. */
@@ -38,6 +86,7 @@ export function Appointment({ prefill }) {
       return isUntouched ? { ...previous, message } : previous
     })
     setStatus('idle')
+    setCopyState('idle')
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     document.getElementById('appointment')?.scrollIntoView({
@@ -49,9 +98,38 @@ export function Appointment({ prefill }) {
     return () => window.clearTimeout(timer)
   }, [prefill])
 
+  useEffect(() => {
+    return () => window.clearTimeout(copyTimer.current)
+  }, [])
+
+  /* Move focus to the outcome so keyboard and screen-reader users land there. */
+  useEffect(() => {
+    const resultStates = ['demo', 'whatsapp', 'sent', 'error', 'unavailable']
+    if (!resultStates.includes(status)) return
+
+    const timer = window.setTimeout(
+      () => resultHeadingRef.current?.focus({ preventScroll: true }),
+      60,
+    )
+    return () => window.clearTimeout(timer)
+  }, [status])
+
+  const handleEdit = () => {
+    setStatus('idle')
+    window.setTimeout(() => formRef.current?.querySelector('[name="name"]')?.focus(), 0)
+  }
+
+  const handleNewEnquiry = () => {
+    setValues(emptyValues)
+    setErrors({})
+    setStatus('idle')
+    window.setTimeout(() => formRef.current?.querySelector('[name="name"]')?.focus(), 0)
+  }
+
   const handleChange = (event) => {
     const { name, value } = event.target
     setValues((previous) => ({ ...previous, [name]: value }))
+    setCopyState('idle')
     setErrors((previous) => {
       if (!previous[name]) return previous
       const next = { ...previous }
@@ -66,7 +144,14 @@ export function Appointment({ prefill }) {
     setErrors((previous) => ({ ...previous, [name]: nextErrors[name] }))
   }
 
-  const handleSubmit = (event) => {
+  const handleCopy = async () => {
+    const copied = await copyText(enquiryText)
+    setCopyState(copied ? 'copied' : 'failed')
+    window.clearTimeout(copyTimer.current)
+    copyTimer.current = window.setTimeout(() => setCopyState('idle'), 3000)
+  }
+
+  const handleSubmit = async (event) => {
     event.preventDefault()
     const nextErrors = validateAppointment(values, clinic.appointment.maxDaysAhead)
     setErrors(nextErrors)
@@ -77,12 +162,61 @@ export function Appointment({ prefill }) {
       return
     }
 
+    const mode = clinic.appointment.mode
+
     /*
-     * Deliberately no network request: there is no verified clinic channel yet.
-     * The demo notice explains that nothing was sent or booked.
+     * Demo mode is the default: validate locally, show exactly what would be
+     * shared, and never send or store anything.
      */
+    if (mode === 'demo') {
+      setStatus('demo')
+      return
+    }
+
+    if (mode === 'whatsapp') {
+      if (!clinic.whatsapp.verified || !whatsappLink) {
+        setStatus('unavailable')
+        return
+      }
+
+      setStatus('whatsapp')
+      window.open(whatsappLink, '_blank', 'noopener,noreferrer')
+      return
+    }
+
+    if (mode === 'endpoint') {
+      if (!clinic.appointment.endpoint) {
+        setStatus('unavailable')
+        return
+      }
+
+      try {
+        setStatus('sending')
+        const response = await fetch(clinic.appointment.endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: values.name.trim(),
+            phone: values.phone.trim(),
+            preferredDate: values.date,
+            message: values.message.trim(),
+            source: 'website-enquiry',
+          }),
+        })
+
+        if (!response.ok) throw new Error(`Request failed with ${response.status}`)
+        setStatus('sent')
+      } catch {
+        setStatus('error')
+      }
+      return
+    }
+
+    /* Unknown configuration falls back to the honest demo behaviour. */
     setStatus('demo')
   }
+
+  const isDemoMode = clinic.appointment.mode === 'demo'
 
   return (
     <section id="appointment" className="section appointment" aria-labelledby="appointment-title">
@@ -113,16 +247,29 @@ export function Appointment({ prefill }) {
               </li>
             </ul>
 
-            <div className="appointment__demo">
-              <span className="chip chip--mint">
-                <Info aria-hidden="true" />
-                Demo form
-              </span>
-              <p>
-                Clinic phone and WhatsApp details are pending, so this form is a visual preview.
-                Nothing is sent, stored or booked.
-              </p>
-            </div>
+            {isDemoMode ? (
+              <div className="appointment__demo">
+                <span className="chip chip--mint">
+                  <Info aria-hidden="true" />
+                  Demo form
+                </span>
+                <p>
+                  Clinic phone and WhatsApp details are pending, so this form is a visual preview.
+                  Nothing is sent, stored or booked.
+                </p>
+              </div>
+            ) : (
+              <div className="appointment__demo">
+                <span className="chip chip--mint">
+                  <WhatsAppIcon />
+                  WhatsApp enquiry
+                </span>
+                <p>
+                  Submitting opens WhatsApp with your enquiry pre-filled. Nothing is stored on this
+                  website — you choose whether to send the message.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="appointment__panel">
@@ -131,38 +278,56 @@ export function Appointment({ prefill }) {
                 <span className="appointment__result-icon" aria-hidden="true">
                   <Info />
                 </span>
-                <h3>Enquiry ready — but not sent</h3>
+                <h3 ref={resultHeadingRef} tabIndex={-1}>
+                  Enquiry ready — but not sent
+                </h3>
                 <p>
                   {clinic.appointment.message} Your details stayed in this browser tab and were
                   not saved anywhere.
                 </p>
 
-                <dl className="appointment__summary">
-                  <div>
-                    <dt>Name</dt>
-                    <dd>{values.name.trim()}</dd>
+                <EnquirySummary values={values} />
+
+                <div className="appointment__preview">
+                  <div className="appointment__preview-head">
+                    <span className="appointment__preview-title">
+                      <WhatsAppIcon aria-hidden="true" />
+                      WhatsApp message preview
+                    </span>
+                    <button type="button" className="appointment__copy" onClick={handleCopy}>
+                      {copyState === 'copied' ? (
+                        <>
+                          <Check aria-hidden="true" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy aria-hidden="true" />
+                          Copy
+                        </>
+                      )}
+                    </button>
+                    <span className="sr-only" role="status">
+                      {copyState === 'copied'
+                        ? 'Enquiry text copied to clipboard.'
+                        : copyState === 'failed'
+                          ? 'Copy failed. Select the preview text manually.'
+                          : ''}
+                    </span>
                   </div>
-                  <div>
-                    <dt>Phone</dt>
-                    <dd>{values.phone.trim()}</dd>
-                  </div>
-                  <div>
-                    <dt>Preferred date</dt>
-                    <dd>{formatLongDate(values.date)}</dd>
-                  </div>
-                  {values.message.trim() ? (
-                    <div>
-                      <dt>Message</dt>
-                      <dd>{values.message.trim()}</dd>
-                    </div>
-                  ) : null}
-                </dl>
+                  <pre className="appointment__preview-body">{enquiryText}</pre>
+                  <p className="appointment__preview-note">
+                    {copyState === 'failed'
+                      ? 'Copying was blocked by the browser. You can select the text above manually.'
+                      : 'A verified WhatsApp number is pending, so this cannot be sent yet. Once configured, this preview becomes a one-tap WhatsApp handoff.'}
+                  </p>
+                </div>
 
                 <div className="appointment__result-actions">
                   <button
                     type="button"
                     className="btn btn--ghost btn--sm"
-                    onClick={() => setStatus('idle')}
+                    onClick={handleEdit}
                   >
                     Edit details
                   </button>
@@ -173,8 +338,132 @@ export function Appointment({ prefill }) {
                   a booking endpoint. Both are configured in <code>src/config/clinic.js</code>.
                 </p>
               </div>
-            ) : (
-              <form className="appointment__form" ref={formRef} onSubmit={handleSubmit} noValidate>
+            ) : null}
+
+            {status === 'whatsapp' ? (
+              <div className="appointment__result" role="status">
+                <span className="appointment__result-icon appointment__result-icon--wa" aria-hidden="true">
+                  <WhatsAppIcon />
+                </span>
+                <h3 ref={resultHeadingRef} tabIndex={-1}>
+                  WhatsApp is opening
+                </h3>
+                <p>
+                  Your enquiry has been pre-filled in WhatsApp. Review the message and press send
+                  there — nothing is submitted until you do.
+                </p>
+
+                <EnquirySummary values={values} />
+
+                <div className="appointment__result-actions">
+                  {whatsappLink ? (
+                    <a
+                      className="btn btn--primary btn--sm"
+                      href={whatsappLink}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
+                      Open WhatsApp again
+                      <SendHorizontal aria-hidden="true" />
+                    </a>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--sm"
+                    onClick={handleEdit}
+                  >
+                    Edit details
+                  </button>
+                </div>
+
+                <p className="appointment__result-help">
+                  If WhatsApp did not open, check that pop-ups are allowed for this site, or call
+                  the clinic once its verified number is published.
+                </p>
+              </div>
+            ) : null}
+
+            {status === 'sent' ? (
+              <div className="appointment__result" role="status">
+                <span className="appointment__result-icon" aria-hidden="true">
+                  <Check />
+                </span>
+                <h3 ref={resultHeadingRef} tabIndex={-1}>
+                  Enquiry received
+                </h3>
+                <p>
+                  The clinic will contact you to confirm availability. This is an enquiry, not a
+                  confirmed appointment.
+                </p>
+                <EnquirySummary values={values} />
+                <div className="appointment__result-actions">
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--sm"
+                    onClick={handleNewEnquiry}
+                  >
+                    Send another enquiry
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {status === 'error' ? (
+              <div className="appointment__result" role="alert">
+                <span className="appointment__result-icon appointment__result-icon--warn" aria-hidden="true">
+                  <AlertCircle />
+                </span>
+                <h3 ref={resultHeadingRef} tabIndex={-1}>
+                  Enquiry could not be sent
+                </h3>
+                <p>
+                  Something went wrong while sending. Please try again, or contact the clinic
+                  directly once its verified details are published.
+                </p>
+                <div className="appointment__result-actions">
+                  <button
+                    type="button"
+                    className="btn btn--primary btn--sm"
+                    onClick={handleEdit}
+                  >
+                    Try again
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {status === 'unavailable' ? (
+              <div className="appointment__result" role="alert">
+                <span className="appointment__result-icon appointment__result-icon--warn" aria-hidden="true">
+                  <AlertCircle />
+                </span>
+                <h3 ref={resultHeadingRef} tabIndex={-1}>
+                  Enquiry channel not configured
+                </h3>
+                <p>
+                  No verified WhatsApp number or form endpoint has been provided yet, so this
+                  enquiry cannot be sent. Please contact the clinic directly.
+                </p>
+                <div className="appointment__result-actions">
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--sm"
+                    onClick={handleEdit}
+                  >
+                    Edit details
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {status === 'idle' || status === 'sending' ? (
+              <form
+                className="appointment__form"
+                ref={formRef}
+                onSubmit={handleSubmit}
+                noValidate
+                aria-busy={status === 'sending'}
+              >
                 <h3 className="appointment__form-title">Request an appointment</h3>
 
                 <div className="field">
@@ -292,20 +581,25 @@ export function Appointment({ prefill }) {
                   ) : null}
                 </div>
 
-                <button type="submit" className="btn btn--primary btn--block">
-                  Send appointment enquiry
+                <button
+                  type="submit"
+                  className="btn btn--primary btn--block"
+                  disabled={status === 'sending'}
+                >
+                  {status === 'sending' ? 'Sending enquiry…' : 'Send appointment enquiry'}
                   <Send aria-hidden="true" />
                 </button>
 
                 <p className="appointment__form-note">
                   <Info aria-hidden="true" />
                   <span>
-                    Demo only: submitting this form does not send your details or book an
-                    appointment.
+                    {isDemoMode
+                      ? 'Demo only: submitting this form does not send your details or book an appointment.'
+                      : 'Only your name, phone, preferred date and optional note are shared. No medical records are collected.'}
                   </span>
                 </p>
               </form>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

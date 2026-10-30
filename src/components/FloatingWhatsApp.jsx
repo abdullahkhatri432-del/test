@@ -1,12 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUpRight, Info, X } from 'lucide-react'
 import { clinic } from '../config/clinic'
+import { whatsappHref } from '../lib/contact'
 import WhatsAppIcon from './icons/WhatsAppIcon'
 import './FloatingWhatsApp.css'
-
-function waHref(number) {
-  return `https://wa.me/${number.replace(/\D/g, '')}`
-}
 
 export function FloatingWhatsApp() {
   const [isOpen, setIsOpen] = useState(false)
@@ -37,7 +34,7 @@ export function FloatingWhatsApp() {
     return (
       <a
         className="wa"
-        href={waHref(number)}
+        href={whatsappHref(number)}
         target="_blank"
         rel="noreferrer noopener"
         aria-label={`Chat with ${clinic.shortName} on WhatsApp`}
@@ -51,7 +48,7 @@ export function FloatingWhatsApp() {
   }
 
   return (
-    <div className="wa" ref={wrapperRef}>
+    <div className="wa wa--pending" ref={wrapperRef}>
       <div id="whatsapp-note" className="wa__popover" data-open={isOpen ? 'true' : 'false'}>
         <button
           type="button"
