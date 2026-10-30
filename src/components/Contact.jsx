@@ -154,30 +154,6 @@ export function Contact() {
 
           <div className="contact__map" data-reveal style={{ '--reveal-delay': '120ms' }}>
             <MapArtwork />
-            <div className="contact__map-card">
-              <span className="contact__map-pin" aria-hidden="true">
-                <MapPin />
-              </span>
-              <h3>Clinic Location — Surat, Gujarat</h3>
-              <p>
-                {mapsUrl
-                  ? 'The verified map link is configured. Open it to see the clinic location.'
-                  : 'The clinic’s verified Google Maps link has not been added to this demo yet.'}
-              </p>
-              {mapsUrl ? (
-                <a
-                  href={mapsUrl}
-                  className="btn btn--primary btn--sm"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  Open in Google Maps
-                  <ArrowUpRight aria-hidden="true" />
-                </a>
-              ) : (
-                <span className="chip chip--warn">Map link pending</span>
-              )}
-            </div>
           </div>
         </div>
       </div>
