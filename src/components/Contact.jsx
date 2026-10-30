@@ -167,7 +167,7 @@ export function Contact() {
               <span className="contact__map-pin" aria-hidden="true">
                 <MapPin />
               </span>
-              <h3>Google Maps location</h3>
+              <h3>Clinic Location — Surat, Gujarat</h3>
               <p>
                 {mapsUrl
                   ? 'The verified map link is configured. Open it to see the clinic location.'
