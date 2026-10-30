@@ -155,7 +155,7 @@ export function Contact() {
           <div className="contact__map" data-reveal style={{ '--reveal-delay': '120ms' }}>
             <iframe
               title="Clinic location on Google Maps"
-              src="https://www.google.com/maps?pb=!1m18!1m12!1m3!1d3671.696014682354!2d72.8315!3d21.1702!2m3!1f0!2f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be05d6e2a1d0e95%3A0x4d7e3a9b7b5f2a7!2sRing%20Road%2C%20Surat%2C%20Gujarat!5e0!3m2!1sen!2sin!4v1716000000000!5m2!1sen!2sin"
+              src="https://maps.google.com/maps?q=Ring+Road,+Surat,+Gujarat&t=&z=14&ie=UTF8&iwloc=&output=embed"
               width="100%"
               height="100%"
               style={{ border: 0, minHeight: '320px' }}
